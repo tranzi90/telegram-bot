@@ -1,28 +1,17 @@
 const TelegramApi = require('node-telegram-bot-api')
+const {gameOptions, againOptions} = require("./options");
 
-const token = ''
+const token = '6965854719:AAHm2IqLQoXgVsB_eVKr8QAn99zUbdWeTBA'
 
 const bot = new TelegramApi(token, {polling: true})
 
 const chats = {}
 
-const gameOptions = {
-    reply_markup: JSON.stringify({
-        inline_keyboard: [
-            [{text: '1', callback_data: '1'}, {text: '2', callback_data: '2'}, {text: '3', callback_data: '3'}],
-            [{text: '4', callback_data: '4'}, {text: '5', callback_data: '5'}, {text: '6', callback_data: '6'}],
-            [{text: '7', callback_data: '7'}, {text: '8', callback_data: '8'}, {text: '9', callback_data: '9'}],
-            [{text: '0', callback_data: '0'}],
-        ]
-    })
-}
-
-const againOptions = {
-    reply_markup: JSON.stringify({
-        inline_keyboard: [
-            [{text: 'Restart game', callback_data: '/again'}],
-        ]
-    })
+const startGame = async (chatId) => {
+    await bot.sendMessage(chatId, `Now I'll guess a number from 0 to 9, and try to guess it!`)
+    const randomNumber = Math.floor(Math.random() * 10)
+    chats[chatId] = randomNumber
+    await bot.sendMessage(chatId, `Make a try!`, gameOptions)
 }
 
 const start = () => {
@@ -44,10 +33,7 @@ const start = () => {
             return bot.sendMessage(chatId, `Your name is ${msg.from.first_name} ${msg.from.last_name}`)
         }
         if (text === '/game') {
-            await bot.sendMessage(chatId, `Now I'll guess a number from 0 to 9, and try to guess it!`)
-            const randomNumber = Math.floor(Math.random() * 10)
-            chats[chatId] = randomNumber
-            return bot.sendMessage(chatId, `Make a try!`, gameOptions)
+            return startGame(chatId)
         }
         return bot.sendMessage(chatId, `I don't understand, pls try again...`)
     })
@@ -56,7 +42,10 @@ const start = () => {
         const data = msg.data
         const chatId = msg.message.chat.id
 
-        if (data === chats[chatId])
+        if (data === '/again')
+            return startGame(chatId)
+
+        if (data == chats[chatId])
             return bot.sendMessage(chatId, `Congrats, u guessed number ${chats[chatId]}`, againOptions)
         else
             return bot.sendMessage(chatId, `Unfortunately, u lost - number was ${chats[chatId]}`, againOptions)
